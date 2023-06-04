@@ -2,7 +2,7 @@ import { Modal } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import ItemForm, { type Values } from "./ItemForm";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export default function Content() {
   const [editItem, setEditItem] = useState<Values | null>(null);
@@ -44,10 +44,13 @@ export default function Content() {
     setEditItem(null);
   };
 
-  const onDelete = async (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-    setEditItem(null);
-  };
+  const onDelete = useCallback(
+    async (id: string) => {
+      setItems(items.filter((item) => item.id !== id));
+      setEditItem(null);
+    },
+    [items, setItems]
+  );
 
   return (
     <>

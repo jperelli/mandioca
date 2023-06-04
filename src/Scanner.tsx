@@ -5,16 +5,15 @@ import {
   QrcodeSuccessCallback,
 } from "html5-qrcode";
 import { Html5QrcodeScannerConfig } from "html5-qrcode/esm/html5-qrcode-scanner";
-import { useEffect, useLayoutEffect } from "react";
-
-const qrcodeRegionId = "html5qr-code-full-region";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import UUID from "pure-uuid";
 
 // Creates the configuration object for Html5QrcodeScanner.
 const createConfig = (props: Partial<Html5QrcodeScannerConfig>) => {
   const config: Html5QrcodeScannerConfig = {
     fps: 5,
     supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-    aspectRatio: 1,      
+    aspectRatio: 1,
   };
   if (props.fps) {
     config.fps = props.fps;
@@ -33,12 +32,14 @@ const createConfig = (props: Partial<Html5QrcodeScannerConfig>) => {
 
 const Scanner = (
   props: Partial<Html5QrcodeScannerConfig> & {
-    verbose: boolean;
+    verbose?: boolean;
     onSuccess: QrcodeSuccessCallback;
-    onError: QrcodeErrorCallback;
+    onError?: QrcodeErrorCallback;
   }
 ) => {
-  useLayoutEffect(() => {
+  const elRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
     // when component mounts
     const config = createConfig(props);
     const verbose = props.verbose === true;
@@ -46,22 +47,28 @@ const Scanner = (
     if (!props.onSuccess) {
       throw "onSuccess is required callback.";
     }
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      qrcodeRegionId,
-      config,
-      verbose
-    );
+    const el = elRef.current;
+    if (!el) {
+      throw "Element ref is null";
+    }
+    el.id = new UUID(4).toString();
+    const html5QrcodeScanner = new Html5QrcodeScanner(el.id, config, verbose);
     html5QrcodeScanner.render(props.onSuccess, props.onError);
 
     // cleanup function when component will unmount
     return () => {
-      html5QrcodeScanner.clear().catch((error) => {
-        console.error("Failed to clear html5QrcodeScanner. ", error);
-      });
+      html5QrcodeScanner
+        .clear()
+        .then(() => {
+          console.log("Successfully cleared html5QrcodeScanner.");
+        })
+        .catch((error) => {
+          console.error("Failed to clear html5QrcodeScanner. ", error);
+        });
     };
-  }, []);
+  }, [props.onSuccess, props.onError]);
 
-  return <div id={qrcodeRegionId} />;
+  return <div ref={elRef} />;
 };
 
 export default Scanner;

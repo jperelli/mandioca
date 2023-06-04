@@ -16,17 +16,14 @@ export default function Content() {
   });
 
   const onScanSuccess: QrcodeSuccessCallback = useCallback(
-    (decodedText, decodedResult) => {
-      alert(JSON.stringify(decodedResult));
+    async (decodedText, decodedResult) => {
       const newItem: Values = {
         id: new UUID(4).toString(),
         consumedAt: new Date().toISOString(),
         code: decodedText,
         code_format: decodedResult.result.format?.formatName || "",
       };
-      alert(JSON.stringify(newItem));
       setItems(items.concat([newItem]));
-      alert(JSON.stringify(items));
     },
     [items, setItems]
   );
@@ -36,16 +33,10 @@ export default function Content() {
     close();
   };
 
-  const onScanError = async (errorMessage: string) => {
-    console.log(errorMessage);
-  };
-
   return (
     <Stack align="stretch" justify="center">
       <Scanner
-        onError={onScanError}
         onSuccess={onScanSuccess}
-        verbose
         fps={1}
       />
 
