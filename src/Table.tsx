@@ -35,21 +35,25 @@ export default function Content() {
     return data;
   }, [sortStatus, items]);
 
-  const onSubmitEdit = async (editedItem: Values) => {
-    const item = items.find((item) => item.id === editedItem.id);
-    if (!item) return;
-    setItems(
-      items.map((item) => (item.id === editedItem.id ? editedItem : item))
-    );
-    setEditItem(null);
-  };
+  const onSubmitEdit = useCallback(
+    async (editedItem: Values) => {
+      setItems((items) => {
+        if (!items.find((item) => item.id === editedItem.id)) return items;
+        return items.map((item) =>
+          item.id === editedItem.id ? editedItem : item
+        );
+      });
+      setEditItem(null);
+    },
+    [setItems, setEditItem]
+  );
 
   const onDelete = useCallback(
     async (id: string) => {
-      setItems(items.filter((item) => item.id !== id));
+      setItems((items) => items.filter((item) => item.id !== id));
       setEditItem(null);
     },
-    [items, setItems]
+    [setItems, setEditItem]
   );
 
   return (

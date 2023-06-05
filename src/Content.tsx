@@ -10,7 +10,7 @@ import { useCallback } from "react";
 export default function Content() {
   const [opened, { open, close }] = useDisclosure(false);
 
-  const [items, setItems] = useLocalStorage<Array<Values>>({
+  const [, setItems] = useLocalStorage<Array<Values>>({
     key: "items",
     defaultValue: [],
   });
@@ -23,22 +23,22 @@ export default function Content() {
         code: decodedText,
         code_format: decodedResult.result.format?.formatName || "",
       };
-      setItems(items.concat([newItem]));
+      setItems((items) => items.concat([newItem]));
     },
-    [items, setItems]
+    [setItems]
   );
 
-  const onSubmitAdd = async (newItem: Values) => {
-    setItems(items.concat([newItem]));
-    close();
-  };
+  const onSubmitAdd = useCallback(
+    async (newItem: Values) => {
+      setItems((items) => items.concat([newItem]));
+      close();
+    },
+    [setItems, close]
+  );
 
   return (
     <Stack align="stretch" justify="center">
-      <Scanner
-        onSuccess={onScanSuccess}
-        fps={1}
-      />
+      <Scanner onSuccess={onScanSuccess} fps={1} />
 
       <Table />
 

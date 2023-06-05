@@ -5,7 +5,7 @@ import {
   QrcodeSuccessCallback,
 } from "html5-qrcode";
 import { Html5QrcodeScannerConfig } from "html5-qrcode/esm/html5-qrcode-scanner";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import UUID from "pure-uuid";
 
 // Creates the configuration object for Html5QrcodeScanner.
@@ -66,7 +66,7 @@ const Scanner = (
           console.error("Failed to clear html5QrcodeScanner. ", error);
         });
     };
-  }, [props.onSuccess, props.onError]);
+  }, [props.onSuccess, props.onError, props]);
 
   return <div ref={elRef} />;
 };
