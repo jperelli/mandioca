@@ -1,8 +1,18 @@
-import { Modal } from "@mantine/core";
+import { Button, Modal } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import ItemForm, { type Values } from "./ItemForm";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { useCallback, useMemo, useState } from "react";
+import axios from "axios";
+import { CopyToClipboard } from "react-copy-to-clipboard";
+
+interface Product {
+  barcode: string;
+  name: string;
+  image: string;
+  brands: string;
+  categories: string;
+}
 
 export default function Content() {
   const [editItem, setEditItem] = useState<Values | null>(null);
@@ -11,6 +21,45 @@ export default function Content() {
     key: "items",
     defaultValue: [],
   });
+
+  const [products, setProducts] = useLocalStorage<Array<Product>>({
+    key: "products",
+    defaultValue: [],
+  });
+
+  const getProductsForItems = useCallback(async () => {
+    // get products for items that don't have products
+    // get them from openfoodfacts
+    // save them to products
+    console.log("getProductsForItems", products);
+    const itemsWithoutProducts = items.filter(
+      (item) => !products.find((product) => product.barcode === item.code)
+    );
+    console.log(itemsWithoutProducts);
+    if (itemsWithoutProducts.length === 0) return;
+    console.log("itemsWithoutProducts");
+    const barcodes = itemsWithoutProducts.map((item) => item.code);
+    console.log(barcodes);
+    for (const barcode of barcodes) {
+      try {
+        const response = await axios.get(
+          `https://world.openfoodfacts.org/api/v2/product/${barcode}`
+        );
+        const product = response.data.product;
+        const newProduct: Product = {
+          barcode: barcode,
+          name: product.product_name,
+          image: product.image_front_small_url,
+          brands: product.brands,
+          categories: product.categories,
+        };
+        setProducts((products) => products.concat([newProduct]));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    // window.location.reload();
+  }, [items]);
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
     columnAccessor: "consumedAt",
@@ -91,9 +140,37 @@ export default function Content() {
           {
             accessor: "code",
           },
+          {
+            accessor: "product_name",
+            render: (item) => {
+              const product = products.find((p) => p.barcode === item.code);
+              if (!product) return "";
+              return `${product.name} ${product.brands} ${product.categories}`;
+            },
+          },
+          {
+            accessor: "product_image",
+            render: (item) => (
+              <img
+                src={products.find((p) => p.barcode === item.code)?.image}
+                alt=""
+              />
+            ),
+          },
         ]}
         onRowClick={(item) => setEditItem(item)}
       />
+
+      <Button onClick={() => getProductsForItems()}>
+        Get Products from Items
+      </Button>
+
+      <CopyToClipboard
+        text={JSON.stringify(items)}
+        onCopy={() => alert("copied")}
+      >
+        <Button>Copy to clipboard</Button>
+      </CopyToClipboard>
     </>
   );
 }
