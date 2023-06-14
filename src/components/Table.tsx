@@ -1,23 +1,18 @@
-import { Button, Modal } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
-import ItemForm, { type Values } from "./ItemForm";
+import { Badge, Button, CopyButton, Image, Modal } from "@mantine/core";
 import { DataTable, DataTableSortStatus } from "mantine-datatable";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
+import { notifications } from "@mantine/notifications";
 import { useCallback, useMemo, useState } from "react";
-import axios from "axios";
-import { CopyToClipboard } from "react-copy-to-clipboard";
+import { useLocalStorage } from "@mantine/hooks";
 
-interface Product {
-  barcode: string;
-  name: string;
-  image: string;
-  brands: string;
-  categories: string;
-}
+import ItemForm from "./ItemForm";
+import { DateTime, getProductFromOFF } from "../utils";
+import { Product, StockRecord } from "../schema";
 
 export default function Content() {
-  const [editItem, setEditItem] = useState<Values | null>(null);
+  const [editItem, setEditItem] = useState<StockRecord | null>(null);
 
-  const [items, setItems] = useLocalStorage<Array<Values>>({
+  const [items, setItems] = useLocalStorage<Array<StockRecord>>({
     key: "items",
     defaultValue: [],
   });
@@ -31,44 +26,35 @@ export default function Content() {
     // get products for items that don't have products
     // get them from openfoodfacts
     // save them to products
-    console.log("getProductsForItems", products);
     const itemsWithoutProducts = items.filter(
       (item) => !products.find((product) => product.barcode === item.code)
     );
-    console.log(itemsWithoutProducts);
     if (itemsWithoutProducts.length === 0) return;
-    console.log("itemsWithoutProducts");
     const barcodes = itemsWithoutProducts.map((item) => item.code);
-    console.log(barcodes);
     for (const barcode of barcodes) {
       try {
-        const response = await axios.get(
-          `https://world.openfoodfacts.org/api/v2/product/${barcode}`
-        );
-        const product = response.data.product;
-        const newProduct: Product = {
-          barcode: barcode,
-          name: product.product_name,
-          image: product.image_front_small_url,
-          brands: product.brands,
-          categories: product.categories,
-        };
+        const newProduct = await getProductFromOFF(barcode);
         setProducts((products) => products.concat([newProduct]));
       } catch (error) {
-        console.log(error);
+        console.error(error);
+        notifications.show({
+          title: "Warning",
+          message: "Product not found",
+          color: "red",
+        });
       }
     }
     // window.location.reload();
   }, [items]);
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "consumedAt",
+    columnAccessor: "executedAt",
     direction: "desc",
   });
 
   const tableData = useMemo(() => {
     const data = [...items];
-    const colName = sortStatus.columnAccessor as keyof Values;
+    const colName = sortStatus.columnAccessor as keyof StockRecord;
     data.sort((a, b) => {
       const av = a[colName] || 0;
       const bv = b[colName] || 0;
@@ -85,7 +71,7 @@ export default function Content() {
   }, [sortStatus, items]);
 
   const onSubmitEdit = useCallback(
-    async (editedItem: Values) => {
+    async (editedItem: StockRecord) => {
       setItems((items) => {
         if (!items.find((item) => item.id === editedItem.id)) return items;
         return items.map((item) =>
@@ -117,12 +103,12 @@ export default function Content() {
           <ItemForm
             onSubmit={onSubmitEdit}
             onDelete={onDelete}
-            initialValues={editItem}
+            initialStockRecord={editItem}
           />
         ) : null}
       </Modal>
 
-      <DataTable<Values>
+      <DataTable<StockRecord>
         withBorder
         borderRadius="sm"
         withColumnBorders
@@ -133,29 +119,44 @@ export default function Content() {
         onSortStatusChange={setSortStatus}
         columns={[
           {
-            accessor: "consumedAt",
+            accessor: "executedAt",
+            title: "At",
             sortable: true,
-            render: (item) => item.consumedAt.replace("T", " ").split(".")[0],
+            render: (item) => <DateTime dateString={item.executedAt} />,
           },
           {
-            accessor: "code",
+            accessor: "product_image",
+            render: (item) => (
+              <Image
+                maw={100}
+                height={100}
+                fit="cover"
+                mx="auto"
+                radius="md"
+                src={products.find((p) => p.barcode === item.code)?.image}
+              />
+            ),
           },
           {
             accessor: "product_name",
             render: (item) => {
               const product = products.find((p) => p.barcode === item.code);
-              if (!product) return "";
-              return `${product.name} ${product.brands} ${product.categories}`;
+              return (
+                <div>
+                  <Badge>
+                    {product
+                      ? product.brands?.split(",")?.[0] || "?"
+                      : "Unrecognized"}
+                  </Badge>
+                  <div>{product ? product.name : item.code}</div>
+                </div>
+              );
             },
           },
           {
-            accessor: "product_image",
-            render: (item) => (
-              <img
-                src={products.find((p) => p.barcode === item.code)?.image}
-                alt=""
-              />
-            ),
+            accessor: "quantity",
+            title: "Q",
+            render: (item) => item.quantity,
           },
         ]}
         onRowClick={(item) => setEditItem(item)}
@@ -165,12 +166,17 @@ export default function Content() {
         Get Products from Items
       </Button>
 
-      <CopyToClipboard
-        text={JSON.stringify(items)}
-        onCopy={() => alert("copied")}
-      >
-        <Button>Copy to clipboard</Button>
-      </CopyToClipboard>
+      <CopyButton value={JSON.stringify(items)} timeout={2000}>
+        {({ copied, copy }) => (
+          <Button
+            onClick={copy}
+            color={copied ? "teal" : undefined}
+            leftIcon={copied ? <IconCheck /> : <IconCopy />}
+          >
+            {copied ? "Copied!" : "Copy to clipboard"}
+          </Button>
+        )}
+      </CopyButton>
     </>
   );
 }

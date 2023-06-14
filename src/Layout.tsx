@@ -1,14 +1,33 @@
-import { useState } from "react";
 import {
   AppShell,
-  Navbar,
-  Header,
-  Text,
-  MediaQuery,
   Burger,
+  Header,
+  MediaQuery,
+  Navbar,
+  Text,
   useMantineTheme,
 } from "@mantine/core";
-import Content from "./Content";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { useState } from "react";
+
+import ScannerScreen from "./screens/Scanner";
+import ShoppingListBuilderScreen from "./screens/ShoppingListBuilder";
+import ShoppingListScreen from "./screens/ShoppingListDetail";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <ScannerScreen />,
+  },
+  {
+    path: "/shoppinglistbuilder",
+    element: <ShoppingListBuilderScreen />,
+  },
+  {
+    path: "/shoppinglist/:id",
+    element: <ShoppingListScreen />,
+  },
+]);
 
 export default function AppShellDemo() {
   const theme = useMantineTheme();
@@ -56,7 +75,7 @@ export default function AppShellDemo() {
         </Header>
       }
     >
-      <Content />
+      <RouterProvider router={router} />
     </AppShell>
   );
 }

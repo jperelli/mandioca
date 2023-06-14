@@ -1,45 +1,42 @@
-import { useState } from "react";
 import UUID from "pure-uuid";
-import { useForm } from "@mantine/form";
-import { IconCalendar } from "@tabler/icons-react";
 import {
-  Group,
   Button,
-  Paper,
-  Text,
-  LoadingOverlay,
-  useMantineTheme,
+  Group,
   Input,
   InputBase,
+  LoadingOverlay,
+  NumberInput,
+  Paper,
+  Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { DateTimePicker } from "@mantine/dates";
-import { getISODate } from "./utils";
+import { IconCalendar } from "@tabler/icons-react";
+import { useForm } from "@mantine/form";
+import { useState } from "react";
 
-export interface Values {
-  id: string;
-  consumedAt: string;
-  code: string;
-  code_format: string;
-}
+import { StockRecord } from "../schema";
+import { getISODate } from "../utils";
 
-interface ItemFormProps {
+interface StockRecordFormProps {
   // onsubmit is a promise function that returns nothing
-  onSubmit?: (values: Values) => Promise<void>;
+  onSubmit?: (values: StockRecord) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  initialValues?: Partial<Values>;
+  initialStockRecord?: Partial<StockRecord>;
 }
 
-export default function ItemForm(props: ItemFormProps) {
+export default function StockRecordForm(props: StockRecordFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const theme = useMantineTheme();
 
-  const form = useForm<Values>({
+  const form = useForm<StockRecord>({
     initialValues: {
-      id: props.initialValues?.id || new UUID(4).toString(),
-      consumedAt: props.initialValues?.consumedAt || getISODate(),
-      code: props.initialValues?.code || "",
-      code_format: props.initialValues?.code_format || "",
+      id: props.initialStockRecord?.id || new UUID(4).toString(),
+      executedAt: props.initialStockRecord?.executedAt || getISODate(),
+      quantity: props.initialStockRecord?.quantity || 0,
+      code: props.initialStockRecord?.code || "",
+      code_format: props.initialStockRecord?.code_format || "",
     },
   });
 
@@ -88,11 +85,11 @@ export default function ItemForm(props: ItemFormProps) {
         <DateTimePicker
           mt="md"
           required
-          placeholder="Consumed At"
-          label="Consumed At"
+          placeholder="Executed At"
+          label="Executed At"
           icon={<IconCalendar size={16} stroke={1.5} />}
           {...form.getInputProps("date")}
-          value={new Date(form.values.consumedAt)}
+          value={new Date(form.values.executedAt)}
           onChange={(value) => form.setFieldValue("date", getISODate(value))}
         />
         <InputBase
@@ -108,6 +105,13 @@ export default function ItemForm(props: ItemFormProps) {
           placeholder="Code Format"
           label="Code Format"
           {...form.getInputProps("code_format")}
+        />
+        <NumberInput
+          mt="md"
+          required
+          placeholder="Quantity"
+          label="Quantity"
+          {...form.getInputProps("quantity")}
         />
         {error && (
           <Text color="red" size="sm" mt="sm">

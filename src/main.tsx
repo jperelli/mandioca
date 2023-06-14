@@ -1,11 +1,21 @@
+import "dayjs/locale/es"; // import { registerSW } from "virtual:pwa-register";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-// import { registerSW } from "virtual:pwa-register";
+import { DatesProvider } from "@mantine/dates";
+import { MantineProvider } from "@mantine/core";
+
+import Layout from "./Layout";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <MantineProvider withGlobalStyles withNormalizeCSS>
+      <DatesProvider
+        settings={{ locale: "es", firstDayOfWeek: 0, weekendDays: [0] }}
+      >
+        <Layout />
+      </DatesProvider>
+    </MantineProvider>
   </React.StrictMode>
 );
 
