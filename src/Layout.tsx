@@ -1,18 +1,13 @@
-import {
-  AppShell,
-  Burger,
-  Header,
-  MediaQuery,
-  Navbar,
-  Text,
-  useMantineTheme,
-} from "@mantine/core";
+import { AppShell, Navbar, Text, useMantineTheme } from "@mantine/core";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { useState } from "react";
+import { notifications } from "@mantine/notifications";
+import { useCallback, useState } from "react";
 
+import Header from "./layout/Header";
 import ScannerScreen from "./screens/Scanner";
 import ShoppingListBuilderScreen from "./screens/ShoppingListBuilder";
 import ShoppingListScreen from "./screens/ShoppingListDetail";
+import { AuthProvider } from "./context/auth";
 
 const router = createBrowserRouter([
   {
@@ -33,49 +28,52 @@ export default function AppShellDemo() {
   const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
 
-  return (
-    <AppShell
-      styles={{
-        main: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[8]
-              : theme.colors.gray[0],
-        },
-      }}
-      navbarOffsetBreakpoint="sm"
-      asideOffsetBreakpoint="sm"
-      navbar={
-        <Navbar
-          p="md"
-          hiddenBreakpoint="sm"
-          hidden={!opened}
-          width={{ sm: 200, lg: 300 }}
-        >
-          <Text>Application navbar</Text>
-        </Navbar>
-      }
-      header={
-        <Header height={{ base: 50, md: 70 }} p="md">
-          <div
-            style={{ display: "flex", alignItems: "center", height: "100%" }}
-          >
-            <MediaQuery largerThan="sm" styles={{ display: "none" }}>
-              <Burger
-                opened={opened}
-                onClick={() => setOpened((o) => !o)}
-                size="sm"
-                color={theme.colors.gray[6]}
-                mr="xl"
-              />
-            </MediaQuery>
+  const onAuthError = useCallback((error: Error, message: string) => {
+    notifications.show({
+      color: "red",
+      title: "Error",
+      message: message,
+    });
+    console.log(message);
+    console.error(error);
+  }, []);
 
-            <Text></Text>
-          </div>
-        </Header>
-      }
-    >
-      <RouterProvider router={router} />
-    </AppShell>
+  const onAuthSuccess = useCallback((message: string) => {
+    notifications.show({
+      color: "green",
+      title: "Success",
+      message: message,
+    });
+    console.log(message);
+  }, []);
+
+  return (
+    <AuthProvider onError={onAuthError} onSuccess={onAuthSuccess}>
+      <AppShell
+        styles={{
+          main: {
+            background:
+              theme.colorScheme === "dark"
+                ? theme.colors.dark[8]
+                : theme.colors.gray[0],
+          },
+        }}
+        navbarOffsetBreakpoint="sm"
+        asideOffsetBreakpoint="sm"
+        navbar={
+          <Navbar
+            p="md"
+            hiddenBreakpoint="sm"
+            hidden={!opened}
+            width={{ sm: 200, lg: 300 }}
+          >
+            <Text>Application navbar</Text>
+          </Navbar>
+        }
+        header={<Header onBurger={(opened) => setOpened(opened)} />}
+      >
+        <RouterProvider router={router} />
+      </AppShell>
+    </AuthProvider>
   );
 }

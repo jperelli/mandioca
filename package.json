@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -17,6 +17,9 @@
     "@mantine/form": "^6.0.13",
     "@mantine/hooks": "^6.0.13",
     "@mantine/notifications": "^6.0.13",
+    "@supabase/auth-ui-react": "^0.4.2",
+    "@supabase/auth-ui-shared": "^0.1.6",
+    "@supabase/supabase-js": "^2.26.0",
     "@tabler/icons-react": "^2.21.0",
     "axios": "^1.4.0",
     "dexie": "^3.2.4",
