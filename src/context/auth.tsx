@@ -74,6 +74,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({
           providers={["google"]}
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
+          redirectTo={window.location.origin}
         />
       )}
     </AuthContext.Provider>
