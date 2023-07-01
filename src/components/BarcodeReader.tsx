@@ -1,5 +1,7 @@
 import UUID from "pure-uuid";
+import styled from "@emotion/styled";
 import {
+  ActionIcon,
   Box,
   Center,
   LoadingOverlay,
@@ -13,12 +15,34 @@ import {
   Html5QrcodeResult,
   Html5QrcodeScanType,
   Html5QrcodeScanner,
+  Html5QrcodeScannerState,
   QrcodeErrorCallback,
   QrcodeSuccessCallback,
 } from "html5-qrcode";
 import { Html5QrcodeScannerConfig } from "html5-qrcode/esm/html5-qrcode-scanner";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconFlipVertical } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useRef, useState } from "react";
+
+const ActionBar = styled.div`
+  position: absolute;
+  z-index: 1000000;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: end;
+  width: 100%;
+`;
+
+const Container = styled.div<{ flipVertical: boolean }>(
+  (props) => `
+  div:first-of-type img {
+    display: none;
+  }
+  video {
+    transform: ${props.flipVertical ? "scaleX(-1)" : "none"};
+  }
+`
+);
 
 const ASP_TIMEOUT = 3000;
 const ASP_TIMEOUT_INTERVAL = 50;
@@ -37,11 +61,13 @@ const BarcodeReader = (props: {
   config?: Partial<Html5QrcodeScannerConfig> & { verbose?: boolean };
   onSuccess: QrcodeSuccessCallback;
   onError?: QrcodeErrorCallback;
+  onInit?: (scanner: Html5QrcodeScanner) => void;
 }) => {
   const [afterScanPaused, setAfterScanPaused] = useState<string | null>(null);
   const [aspCountdown, setAspCountdown] = useState<number>(100);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const [flipVertical, { toggle: flipVerticalToggle }] = useDisclosure(false);
 
   useEffect(() => {
     if (containerRef.current !== null) {
@@ -89,6 +115,25 @@ const BarcodeReader = (props: {
           );
         }
       );
+      const onScanStarted = () => {
+        if (
+          scannerRef.current?.getState() === Html5QrcodeScannerState.SCANNING
+        ) {
+          // scan started
+          props.onInit?.(scannerRef.current);
+          // console.log(scannerRef.current?.getRunningTrackCapabilities());
+          // console.log(scannerRef.current?.getRunningTrackSettings());
+          // scannerRef.current?.applyVideoConstraints({
+          //   focusMode: "continuous",
+          //   zoom: 2
+          // } as any);
+        } else {
+          setTimeout(() => {
+            onScanStarted();
+          }, 10);
+        }
+      };
+      onScanStarted();
 
       return () => {
         scannerRef.current
@@ -125,7 +170,7 @@ const BarcodeReader = (props: {
   }, [props.onSuccess, props.onError]);
 
   return (
-    <Box maw={400} pos="relative">
+    <Box pos="relative">
       <LoadingOverlay
         visible={afterScanPaused !== null}
         overlayBlur={10}
@@ -153,7 +198,12 @@ const BarcodeReader = (props: {
           </Stack>
         }
       />
-      <div ref={containerRef} />
+      <ActionBar>
+        <ActionIcon variant="light" onClick={() => flipVerticalToggle()}>
+          <IconFlipVertical />
+        </ActionIcon>
+      </ActionBar>
+      <Container flipVertical={flipVertical} ref={containerRef} />
     </Box>
   );
 };
