@@ -1,10 +1,10 @@
-import UUID from "pure-uuid";
 import { Button, Modal, SegmentedControl, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { QrcodeSuccessCallback } from "html5-qrcode";
 import { notifications } from "@mantine/notifications";
 import { useCallback, useMemo } from "react";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
+import { uuidv7 } from "uuidv7";
 
 import BarcodeReader from "../components/BarcodeReader";
 import ItemForm from "../components/ItemForm";
@@ -34,7 +34,7 @@ export default function ScannerScreen() {
   const onScanSuccess: QrcodeSuccessCallback = useCallback(
     async (decodedText, decodedResult) => {
       const newItem: StockRecord = {
-        id: new UUID(4).toString(),
+        id: uuidv7(),
         executedAt: new Date().toISOString(),
         code: decodedText,
         code_format: decodedResult.result.format?.formatName || "",

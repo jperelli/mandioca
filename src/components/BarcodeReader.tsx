@@ -1,4 +1,3 @@
-import UUID from "pure-uuid";
 import styled from "@emotion/styled";
 import {
   ActionIcon,
@@ -23,6 +22,7 @@ import { Html5QrcodeScannerConfig } from "html5-qrcode/esm/html5-qrcode-scanner"
 import { IconCheck, IconFlipVertical } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useRef, useState } from "react";
+import { uuidv7 } from "uuidv7";
 
 const ActionBar = styled.div`
   position: absolute;
@@ -81,7 +81,7 @@ const BarcodeReader = (props: {
       const verbose = props.config?.verbose === true;
 
       const el = containerRef.current;
-      el.id = new UUID(4).toString();
+      el.id = uuidv7();
       scannerRef.current = new Html5QrcodeScanner(el.id, config, verbose);
       scannerRef.current.render(
         (decodedText: string, result: Html5QrcodeResult) => {

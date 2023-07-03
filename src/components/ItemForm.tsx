@@ -1,4 +1,3 @@
-import UUID from "pure-uuid";
 import {
   Button,
   Group,
@@ -14,6 +13,7 @@ import { DateTimePicker } from "@mantine/dates";
 import { IconCalendar } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useState } from "react";
+import { uuidv7 } from "uuidv7";
 
 import { StockRecord } from "../schema";
 import { getISODate } from "../utils";
@@ -32,7 +32,7 @@ export default function StockRecordForm(props: StockRecordFormProps) {
 
   const form = useForm<StockRecord>({
     initialValues: {
-      id: props.initialStockRecord?.id || new UUID(4).toString(),
+      id: props.initialStockRecord?.id || uuidv7(),
       executedAt: props.initialStockRecord?.executedAt || getISODate(),
       quantity: props.initialStockRecord?.quantity || 0,
       code: props.initialStockRecord?.code || "",
@@ -48,7 +48,7 @@ export default function StockRecordForm(props: StockRecordFormProps) {
       .then(() => {
         setLoading(false);
         form.reset();
-        form.setFieldValue("id", new UUID(4).toString());
+        form.setFieldValue("id", uuidv7());
       })
       .catch((err) => {
         setError(err.message);
@@ -64,7 +64,7 @@ export default function StockRecordForm(props: StockRecordFormProps) {
       .then(() => {
         setLoading(false);
         form.reset();
-        form.setFieldValue("id", new UUID(4).toString());
+        form.setFieldValue("id", uuidv7());
       })
       .catch((err) => {
         setError(err.message);
